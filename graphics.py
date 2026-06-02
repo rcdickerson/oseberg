@@ -112,7 +112,7 @@ class Circle:
         cx = self._center._x
         cy = self._center._y
 
-        for y in range(-radius, radius + 1):
+        for y in range(-radius, radius):
             x_exact = math.sqrt(radius * radius - y * y)
 
             x_int = int(x_exact)
