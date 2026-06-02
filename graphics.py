@@ -92,7 +92,7 @@ class Circle:
     def __init__(self, center, radius):
         self._center = center
         self._radius = radius
-        self._border_width = 2
+        self._border_width = 1
         self._border_color = Color(255, 255, 255)
         self._fill_color = Color(255, 255, 255)
 
@@ -140,11 +140,13 @@ class Circle:
             indices.extend([0, i, i + 1])
         indices.extend([0, num_segments, 1])
 
+        # Covert to C arrays.
         num_vertices = len(border_vertices)
         border_vert_array = (sdl3.SDL_Vertex * num_vertices)(*border_vertices)
         fill_vert_array = (sdl3.SDL_Vertex * num_vertices)(*fill_vertices)
         idx_array = (ctypes.c_int * len(indices))(*indices)
 
+        # Render border.
         sdl3.SDL_RenderGeometry(
             renderer,
             None,
@@ -152,6 +154,8 @@ class Circle:
             len(border_vertices),
             idx_array,
             len(indices))
+
+        # Render fill.
         sdl3.SDL_RenderGeometry(
             renderer,
             None,
@@ -159,6 +163,96 @@ class Circle:
             len(fill_vertices),
             idx_array,
             len(indices))
+
+
+class Rectangle:
+    def __init__(self, left_x, top_y, width, height):
+        self._left_x = left_x
+        self._top_y = top_y
+        self._right_x = left_x + width
+        self._bottom_y = top_y + height
+        self._width = width
+        self._height = height
+        self._border_width = 1
+        self._border_color = Color(255, 255, 255)
+        self._fill_color = Color(255, 255, 255)
+
+    def set_border_width(self, width):
+        self._border_width = width
+
+    def set_border_color(self, color):
+        self._border_color = color
+
+    def set_fill_color(self, color):
+        self._fill_color = color
+
+    def _render(self, renderer):
+        border_vertices = [
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._left_x, self._top_y),
+                self._border_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._right_x, self._top_y),
+                self._border_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._right_x, self._bottom_y),
+                self._border_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._left_x, self._bottom_y),
+                self._border_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0))]
+
+        fill_left_x = self._left_x + self._border_width
+        fill_right_x = self._right_x - self._border_width
+        fill_top_y = self._top_y + self._border_width
+        fill_bottom_y = self._bottom_y - self._border_width
+        fill_vertices = [
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(fill_left_x, fill_top_y),
+                self._fill_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(fill_right_x, fill_top_y),
+                self._fill_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(fill_right_x, fill_bottom_y),
+                self._fill_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(fill_left_x, fill_bottom_y),
+                self._fill_color.as_fcolor(),
+                sdl3.SDL_FPoint(0.0, 0.0))]
+
+        indices = [0, 1, 2, 0, 2, 3]
+
+        # Covert to C arrays.
+        num_vertices = len(border_vertices)
+        border_vert_array = (sdl3.SDL_Vertex * num_vertices)(*border_vertices)
+        fill_vert_array = (sdl3.SDL_Vertex * num_vertices)(*fill_vertices)
+        idx_array = (ctypes.c_int * len(indices))(*indices)
+
+        # Render border.
+        sdl3.SDL_RenderGeometry(
+            renderer,
+            None,
+            border_vert_array,
+            len(border_vertices),
+            idx_array,
+            len(indices))
+
+        # Render fill.
+        sdl3.SDL_RenderGeometry(
+            renderer,
+            None,
+            fill_vert_array,
+            len(fill_vertices),
+            idx_array,
+            len(indices))
+
 
 def main():
     window = Window('Test Window', 800, 600)
@@ -169,6 +263,10 @@ def main():
     circle.set_border_color(Color(0, 80, 0))
     circle.set_border_width(5)
     window.add(circle)
+
+    rectangle = Rectangle(200, 100, 300, 150)
+    rectangle.set_fill_color(Color(50, 50, 200))
+    window.add(rectangle)
 
     window.show()
     return 0
