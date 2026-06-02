@@ -105,10 +105,7 @@ class Circle:
     def set_fill_color(self, color):
         self._fill_color = color
 
-    def _render(self, renderer):
-        self._render_smooth(renderer)
-
-    def _render_smooth(self, renderer, num_segments=64):
+    def _render(self, renderer, num_segments=64):
         """Render smoothly using a triangle fan."""
 
         center_vertex = sdl3.SDL_Vertex(
@@ -162,66 +159,6 @@ class Circle:
             len(fill_vertices),
             idx_array,
             len(indices))
-
-    def _render_rough(self, renderer):
-        """Midpoint circle algorithm."""
-        x = self._radius - 1
-        y = 0
-        tx = 1
-        ty = 1
-        error = tx - (self._radius * 2)
-        border_points = []
-
-        self._fill_color.setr_draw_color(renderer)
-
-        while x >= y:
-            border_points.extend([
-                sdl3.SDL_FPoint(self._center._x + x, self._center._y - y),
-                sdl3.SDL_FPoint(self._center._x + x, self._center._y + y),
-                sdl3.SDL_FPoint(self._center._x - x, self._center._y - y),
-                sdl3.SDL_FPoint(self._center._x - x, self._center._y + y),
-                sdl3.SDL_FPoint(self._center._x + y, self._center._y - x),
-                sdl3.SDL_FPoint(self._center._x + y, self._center._y + x),
-                sdl3.SDL_FPoint(self._center._x - y, self._center._y - x),
-                sdl3.SDL_FPoint(self._center._x - y, self._center._y + x)])
-
-            sdl3.SDL_RenderLine(renderer,
-                                float(self._center._x - x),
-                                float(self._center._y - y),
-                                float(self._center._x + x),
-                                float(self._center._y - y))
-            sdl3.SDL_RenderLine(renderer,
-                                float(self._center._x - x),
-                                float(self._center._y + y),
-                                float(self._center._x + x),
-                                float(self._center._y + y))
-            sdl3.SDL_RenderLine(renderer,
-                                float(self._center._x - y),
-                                float(self._center._y - x),
-                                float(self._center._x + y),
-                                float(self._center._y - x))
-            sdl3.SDL_RenderLine(renderer,
-                                float(self._center._x - y),
-                                float(self._center._y + x),
-                                float(self._center._x + y),
-                                float(self._center._y + x))
-
-            if error <= 0:
-                y += 1
-                error += ty
-                ty += 2
-
-            if error > 0:
-                x -= 1
-                tx += 2
-                error += tx - (self._radius * 2)
-
-        self._border_color.setr_draw_color(renderer)
-        num_points = len(border_points)
-        CArrayType = sdl3.SDL_FPoint * num_points
-        c_points = CArrayType(*border_points)
-        sdl3.SDL_RenderPoints(renderer, c_points, num_points)
-
 
 def main():
     window = Window('Test Window', 800, 600)
