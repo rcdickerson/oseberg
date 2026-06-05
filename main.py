@@ -21,6 +21,10 @@ def main():
     rectangle2.set_color(Color(50, 50, 200))
     window.add(rectangle2)
 
+    text = TextArea('Test Text', 50, 50)
+    text.set_color(Color.GREEN)
+    window.add(text)
+
     def update(window):
         circle.translate(1, 0)
         circle2.translate(1, 0)

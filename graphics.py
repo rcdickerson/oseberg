@@ -44,6 +44,11 @@ class Window:
         if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
             raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
 
+        if not sdl3.TTF_Init():
+            print(f"TTF Init Error: {sdl3.SDL_GetError().decode()}")
+            sdl3.SDL_Quit()
+            raise Exception("TTF initialization failed")
+
         self._background_color = Color(0, 0, 0)
         self._is_open = True
         self._children = []
@@ -68,6 +73,7 @@ class Window:
             raise GraphicsException(f"Failed to create renderer: {sdl3.SDL_GetError().decode()}")
         sdl3.SDL_SetRenderDrawBlendMode(renderer, sdl3.SDL_BLENDMODE_BLEND)
         self._renderer = renderer
+        self._text_engine = sdl3.TTF_CreateRendererTextEngine(self._renderer)
 
     def update(self):
         while sdl3.SDL_PollEvent(ctypes.byref(self._event)):
@@ -295,3 +301,21 @@ class Rectangle:
             len(vertices),
             idx_array,
             len(indices))
+
+class TextArea:
+
+    def __init__(self, text='', x=0, y=0):
+        self._text = text.encode('utf-8')
+        self._color = Color(255, 255, 255)
+        self.set_location(x, y)
+
+    def set_color(self, color):
+        self._color = color
+
+    def set_location(self, x, y):
+        self._location_x = x
+        self._location_y = y
+
+    def _render(self, renderer):
+        self._color.setr_draw_color(renderer)
+        sdl3.SDL_RenderDebugText(renderer, self._location_x, self._location_y, self._text)
