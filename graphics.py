@@ -39,6 +39,25 @@ _scancodes = {
   'Right': sdl3.SDL_SCANCODE_RIGHT,
 }
 
+_font_locations = {
+  'arial': ['C:\\Windows\\Fonts\\arial.ttf',
+            '/Library/Fonts/Arial.ttf',
+            '/Library/Fonts/Arial Unicode.ttf']
+}
+
+def _open_font(text_engine, font_name, font_size):
+    search_paths = [font_name, f'{font_name}.ttf']
+    search_paths.extend(_font_locations[font_name])
+
+    font = None
+    for font_path in search_paths:
+        font = sdl3.TTF_OpenFont(font_path.encode('utf-8'), font_size)
+        if font:
+            break
+    if not font:
+        raise GraphicsException(f'Could not find a font path for: {font_id}')
+    return font
+
 class Window:
     def __init__(self, title='Window', width=800, height=600):
         if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
@@ -52,6 +71,7 @@ class Window:
         self._background_color = Color(0, 0, 0)
         self._is_open = True
         self._children = []
+        self._text_children = []
         self._tick = 1/60
         self._event = sdl3.SDL_Event()
 
@@ -84,6 +104,8 @@ class Window:
 
         self._background_color.setr_draw_color(self._renderer)
         sdl3.SDL_RenderClear(self._renderer)
+        for tchild in self._text_children:
+            tchild._prepare_text(self._text_engine)
         for child in self._children:
             child._render(self._renderer)
         sdl3.SDL_RenderPresent(self._renderer)
@@ -93,6 +115,8 @@ class Window:
 
     def add(self, child):
         self._children.append(child)
+        if callable(getattr(child, '_prepare_text', None)):
+            self._text_children.append(child)
 
     def is_open(self):
         return self._is_open
@@ -302,20 +326,50 @@ class Rectangle:
             idx_array,
             len(indices))
 
-class TextArea:
 
-    def __init__(self, text='', x=0, y=0):
+class TextArea:
+    def __init__(self, text='', x=0, y=0, font='arial', font_size=24):
         self._text = text.encode('utf-8')
-        self._color = Color(255, 255, 255)
+        self._sdl_text = None
+        self._font = font
+        self._font_size = font_size
+        self._sdl_font = None
+        self.set_color(Color(255, 255, 255))
         self.set_location(x, y)
+
+    def set_text(self, text):
+        self._text = text
+        if self._sdl_text:
+            sdl3.TTF_SetTextString(self._sdl_text, self._text.encode('utf-8'), len(text))
 
     def set_color(self, color):
         self._color = color
+        if self._sdl_text:
+            sdl3.TTF_SetTextColor(self._sdl_text, color._r, color._g, color._b, color._alpha)
 
     def set_location(self, x, y):
         self._location_x = x
         self._location_y = y
 
+    def set_font(self, font):
+        self._font = font
+
+    def set_font_size(self, font_size):
+        self._font_size = font_size
+
+    def _prepare_text(self, text_engine):
+        if not self._sdl_text:
+            font = _open_font(text_engine, self._font, self._font_size)
+            self._sdl_text = sdl3.TTF_CreateText(text_engine, font, self._text, 0)
+            self.set_color(self._color)
+
     def _render(self, renderer):
-        self._color.setr_draw_color(renderer)
-        sdl3.SDL_RenderDebugText(renderer, self._location_x, self._location_y, self._text)
+        if self._sdl_text:
+            sdl3.TTF_DrawRendererText(self._sdl_text, self._location_x, self._location_y)
+        else:
+            self._color.setr_draw_color(renderer)
+            sdl3.SDL_RenderDebugText(renderer, self._location_x, self._location_y, self._text)
+
+    def _destroy(self):
+        if self._sdl_text:
+            sdl3.TTF_DestroyText(self._sdl_text)

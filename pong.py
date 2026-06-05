@@ -17,16 +17,16 @@ class Game:
         self._window.set_background_color(Color(0, 0, 0))
 
         self._left_score = 0
-        # self._left_score_label = Text(Point(WINDOW_WIDTH / 3, PADDLE_MARGIN), "0")
-        # self._left_score_label.setFill('white')
-        # self._left_score_label.setSize(30)
-        # self._left_score_label.draw(self._window)
+        self._left_score_label = TextArea('0', WINDOW_WIDTH / 3, PADDLE_MARGIN)
+        self._left_score_label.set_color(Color.WHITE)
+        self._left_score_label.set_font_size(30)
+        self._window.add(self._left_score_label)
 
         self._right_score = 0
-        # self._right_score_label = Text(Point(2 * WINDOW_WIDTH / 3, PADDLE_MARGIN), "0")
-        # self._right_score_label.setFill('white')
-        # self._right_score_label.setSize(30)
-        # self._right_score_label.draw(self._window)
+        self._right_score_label = TextArea('0', 2 * WINDOW_WIDTH / 3, PADDLE_MARGIN)
+        self._right_score_label.set_color(Color.WHITE)
+        self._right_score_label.set_font_size(30)
+        self._window.add(self._right_score_label)
 
         self._ball = Ball()
         self._ball.set_velocity_x(INITIAL_BALL_VELOCITY_X)
@@ -91,7 +91,7 @@ class Game:
             self._ball.set_velocity_x(INITIAL_BALL_VELOCITY_X)
             self._ball.set_velocity_y(0)
             self._right_score += 1
-            self._right_score_label.setText(str(self._right_score))
+            self._right_score_label.set_text(str(self._right_score))
 
         # Ball going off right.
         if self._ball.get_bounds().left_x() > WINDOW_WIDTH:
@@ -99,7 +99,7 @@ class Game:
             self._ball.set_velocity_x(-INITIAL_BALL_VELOCITY_X)
             self._ball.set_velocity_y(0)
             self._left_score += 1
-            self._left_score_label.setText(str(self._left_score))
+            self._left_score_label.set_text(str(self._left_score))
 
 class Ball:
     WIDTH = 20
