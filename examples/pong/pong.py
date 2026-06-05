@@ -9,6 +9,9 @@ WINDOW_HEIGHT = 600
 PADDLE_MARGIN = 25
 PADDLE_SPEED = 10
 INITIAL_BALL_VELOCITY_X = 10
+NET_RECT_WIDTH = 16
+NET_RECT_HEIGHT = 30
+NET_RECT_GAP = 15
 
 class Game:
     def __init__(self, window):
@@ -37,6 +40,17 @@ class Game:
 
         self._paddle_right = Paddle(WINDOW_WIDTH - PADDLE_MARGIN)
         self._paddle_right.draw(window)
+
+        self.draw_net()
+
+    def draw_net(self):
+        x = (WINDOW_WIDTH - NET_RECT_WIDTH) // 2
+        y = 0
+        while y < WINDOW_HEIGHT:
+            rect = Rectangle(x, y, NET_RECT_WIDTH, NET_RECT_HEIGHT)
+            rect.set_color(Color(100, 100, 100))
+            self._window.add(rect)
+            y += NET_RECT_HEIGHT + NET_RECT_GAP
 
     def handle_input(self):
         pass
