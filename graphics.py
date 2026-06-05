@@ -94,44 +94,42 @@ class Circle:
         self._texture = None
 
         # Expanded radius with an anti-aliasing border.
-        self._extended_radius = int(self._radius + 1.0)
+        self._extended_radius = self._radius + 1
         self._extended_diameter = 2 * self._extended_radius
+
+        self._render_pixels()
 
     def set_color(self, color):
         self._color = color
 
+        if self._texture:
+            sdl3.SDL_SetTextureColorMod(self._texture, color._r, color._g, color._b)
+            sdl3.SDL_SetTextureAlphaMod(self._texture, color._alpha)
+        else:
+            self._render_pixels()
+
     def _make_texture(self, renderer):
         texture = sdl3.SDL_CreateTexture(
-                    renderer,
-                    sdl3.SDL_PIXELFORMAT_RGBA8888,
-                    sdl3.SDL_TEXTUREACCESS_TARGET,
-                    self._extended_diameter,
-                    self._extended_diameter)
-        sdl3.SDL_SetTextureScaleMode(texture, sdl3.SDL_SCALEMODE_LINEAR)
+            renderer,
+            sdl3.SDL_PIXELFORMAT_RGBA32,
+            sdl3.SDL_TEXTUREACCESS_STATIC,
+            self._extended_diameter,
+            self._extended_diameter)
+        sdl3.SDL_UpdateTexture(texture, None, self._pixels, self._extended_diameter * 4)
         sdl3.SDL_SetTextureBlendMode(texture, sdl3.SDL_BLENDMODE_BLEND)
-
-        prev_target = sdl3.SDL_GetRenderTarget(renderer)
-        sdl3.SDL_SetRenderTarget(renderer, texture)
-
-        self._render_direct(renderer, self._extended_radius, self._extended_radius)
-
-        sdl3.SDL_SetRenderTarget(renderer, prev_target)
         self._texture = texture
 
-    def _render_direct(self, renderer, center_x, center_y):
-        left_edge = center_x - self._extended_radius
-        top_edge = center_y - self._extended_radius
-
-        for y_offset in range(self._extended_diameter + 1):
-            y = top_edge + y_offset
-            dy = center_y - y
-            for x_offset in range(self._extended_diameter + 1):
-                x = left_edge + x_offset
-                dx = center_x - x
+    def _render_pixels(self):
+        pixels_size = (self._extended_diameter + 1) * (self._extended_diameter + 1) * 4
+        pixels = bytearray(pixels_size)
+        for y in range(self._extended_diameter + 1):
+            dy = self._extended_radius - y
+            for x in range(self._extended_diameter + 1):
+                dx = self._extended_radius - x
                 dist = math.sqrt(dx * dx + dy * dy)
 
                 if dist >= self._radius + 0.5:
-                    continue
+                    alpha = 0
                 elif dist <= self._radius - 0.5:
                     alpha = 255
                 else:
@@ -139,23 +137,21 @@ class Circle:
 
                 alpha = max(0, min(255, alpha))
 
-                sdl3.SDL_SetRenderDrawColor(renderer,
-                                            self._color._r,
-                                            self._color._g,
-                                            self._color._b,
-                                            alpha)
-                sdl3.SDL_RenderPoint(renderer, x, y)
+                offset = (y * self._extended_diameter + x) * 4
+                pixels[offset] = self._color._r
+                pixels[offset + 1] = self._color._g
+                pixels[offset + 2] = self._color._b
+                pixels[offset + 3] = alpha
+        self._pixels = bytes(pixels)
 
     def _render(self, renderer):
-        #self._render_direct(renderer, self._center._x, self._center._y)
-        #return
         if not self._texture:
             self._make_texture(renderer)
         bounds = sdl3.SDL_FRect(
             self._center._x - self._extended_radius,
             self._center._y - self._extended_radius,
-            self._extended_diameter+1,
-            self._extended_diameter+1)
+            float(self._extended_diameter),
+            float(self._extended_diameter))
         sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)
 
 
@@ -213,7 +209,7 @@ def main():
     window = Window('Test Window', 800, 600)
     window.set_background_color(Color(30, 100, 200))
 
-    circle = Circle(Point(400, 300), 300)
+    circle = Circle(Point(400, 300), 100)
     circle.set_color(Color(0, 80, 0))
     window.add(circle)
 
@@ -221,9 +217,13 @@ def main():
     circle2.set_color(Color(0, 200, 0))
     window.add(circle2)
 
-    rectangle = Rectangle(200, 100, 300, 150)
-    rectangle.set_color(Color(50, 50, 200))
-    #window.add(rectangle)
+    rectangle1 = Rectangle(190, 90, 320, 170)
+    rectangle1.set_color(Color(255, 255, 255))
+    window.add(rectangle1)
+
+    rectangle2 = Rectangle(200, 100, 300, 150)
+    rectangle2.set_color(Color(50, 50, 200))
+    window.add(rectangle2)
 
     window.show()
     return 0
