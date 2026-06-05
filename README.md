@@ -34,3 +34,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install PySDL3
 ```
+
+## Roadmap
+
+The following features aren't implemented yet, but are on the short term plan:
+
++ Recognizing mouse clicks.
++ Rendering images from files (gifs, pngs, etc.)
