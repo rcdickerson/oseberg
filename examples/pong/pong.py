@@ -206,6 +206,7 @@ class Paddle:
     def draw(self, window):
         window.add(self._rect)
 
+
 def main():
     window = Window("Pong", WINDOW_WIDTH, WINDOW_HEIGHT)
     game = Game(window)
