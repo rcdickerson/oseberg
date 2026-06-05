@@ -6,7 +6,6 @@ import sys
 
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
-WINDOW_CENTER = Point(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
 PADDLE_MARGIN = 25
 PADDLE_SPEED = 10
 INITIAL_BALL_VELOCITY_X = 10
@@ -17,13 +16,13 @@ class Game:
 
         self._window.set_background_color(Color(0, 0, 0))
 
-        # self._left_score = 0
+        self._left_score = 0
         # self._left_score_label = Text(Point(WINDOW_WIDTH / 3, PADDLE_MARGIN), "0")
         # self._left_score_label.setFill('white')
         # self._left_score_label.setSize(30)
         # self._left_score_label.draw(self._window)
 
-        # self._right_score = 0
+        self._right_score = 0
         # self._right_score_label = Text(Point(2 * WINDOW_WIDTH / 3, PADDLE_MARGIN), "0")
         # self._right_score_label.setFill('white')
         # self._right_score_label.setSize(30)
@@ -41,22 +40,22 @@ class Game:
 
     def handle_input(self):
         pass
-        # if self._window.checkKeyPressed('q'):
-        #     sys.exit(0)
+        if self._window.is_key_pressed('q'):
+             sys.exit(0)
 
-        # if self._window.checkKeyPressed('w') and self._paddle_left.can_go_up():
-        #     self._paddle_left.set_velocity(-PADDLE_SPEED)
-        # elif self._window.checkKeyPressed('s') and self._paddle_left.can_go_down():
-        #     self._paddle_left.set_velocity(PADDLE_SPEED)
-        # else:
-        #     self._paddle_left.set_velocity(0)
+        if self._window.is_key_pressed('w') and self._paddle_left.can_go_up():
+            self._paddle_left.set_velocity(-PADDLE_SPEED)
+        elif self._window.is_key_pressed('s') and self._paddle_left.can_go_down():
+            self._paddle_left.set_velocity(PADDLE_SPEED)
+        else:
+            self._paddle_left.set_velocity(0)
 
-        # if self._window.checkKeyPressed('Up') and self._paddle_right.can_go_up():
-        #     self._paddle_right.set_velocity(-PADDLE_SPEED)
-        # elif self._window.checkKeyPressed('Down') and self._paddle_right.can_go_down():
-        #     self._paddle_right.set_velocity(PADDLE_SPEED)
-        # else:
-        #     self._paddle_right.set_velocity(0)
+        if self._window.is_key_pressed('Up') and self._paddle_right.can_go_up():
+            self._paddle_right.set_velocity(-PADDLE_SPEED)
+        elif self._window.is_key_pressed('Down') and self._paddle_right.can_go_down():
+            self._paddle_right.set_velocity(PADDLE_SPEED)
+        else:
+            self._paddle_right.set_velocity(0)
 
     def step(self):
         """
@@ -88,15 +87,15 @@ class Game:
 
         # Ball going off left.
         if self._ball.get_bounds().right_x() < 0:
-            self._ball.place_at(WINDOW_CENTER)
+            self._ball.place_at(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
             self._ball.set_velocity_x(INITIAL_BALL_VELOCITY_X)
             self._ball.set_velocity_y(0)
             self._right_score += 1
             self._right_score_label.setText(str(self._right_score))
 
-         # Ball going off right.
+        # Ball going off right.
         if self._ball.get_bounds().left_x() > WINDOW_WIDTH:
-            self._ball.place_at(WINDOW_CENTER)
+            self._ball.place_at(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
             self._ball.set_velocity_x(-INITIAL_BALL_VELOCITY_X)
             self._ball.set_velocity_y(0)
             self._left_score += 1
@@ -113,8 +112,8 @@ class Ball:
         self._velx = 0
         self._vely = 0
 
-    def place_at(self, center):
-        self._square.center_at(center)
+    def place_at(self, x, y):
+        self._square.center_at(x, y)
 
     def get_bounds(self):
         return self._square.clone()

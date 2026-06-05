@@ -6,16 +6,49 @@ import time
 class GraphicsException(Exception):
     pass
 
+_scancodes = {
+  'a': sdl3.SDL_SCANCODE_A,
+  'b': sdl3.SDL_SCANCODE_B,
+  'c': sdl3.SDL_SCANCODE_C,
+  'd': sdl3.SDL_SCANCODE_D,
+  'e': sdl3.SDL_SCANCODE_E,
+  'f': sdl3.SDL_SCANCODE_F,
+  'g': sdl3.SDL_SCANCODE_G,
+  'h': sdl3.SDL_SCANCODE_H,
+  'i': sdl3.SDL_SCANCODE_I,
+  'j': sdl3.SDL_SCANCODE_J,
+  'k': sdl3.SDL_SCANCODE_K,
+  'l': sdl3.SDL_SCANCODE_L,
+  'm': sdl3.SDL_SCANCODE_M,
+  'n': sdl3.SDL_SCANCODE_N,
+  'o': sdl3.SDL_SCANCODE_O,
+  'p': sdl3.SDL_SCANCODE_P,
+  'q': sdl3.SDL_SCANCODE_Q,
+  'r': sdl3.SDL_SCANCODE_R,
+  's': sdl3.SDL_SCANCODE_S,
+  't': sdl3.SDL_SCANCODE_T,
+  'u': sdl3.SDL_SCANCODE_U,
+  'v': sdl3.SDL_SCANCODE_V,
+  'w': sdl3.SDL_SCANCODE_W,
+  'x': sdl3.SDL_SCANCODE_X,
+  'y': sdl3.SDL_SCANCODE_Y,
+  'z': sdl3.SDL_SCANCODE_Z,
+  'Up': sdl3.SDL_SCANCODE_UP,
+  'Down': sdl3.SDL_SCANCODE_DOWN,
+  'Left': sdl3.SDL_SCANCODE_LEFT,
+  'Right': sdl3.SDL_SCANCODE_RIGHT,
+}
+
 class Window:
     def __init__(self, title='Window', width=800, height=600):
+        if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
+            raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
+
         self._background_color = Color(0, 0, 0)
         self._is_open = True
         self._children = []
         self._tick = 1/60
         self._event = sdl3.SDL_Event()
-
-        if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
-            raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
 
         window_flags = sdl3.SDL_WINDOW_OPENGL
         window = sdl3.SDL_CreateWindow(title.encode('utf-8'), width, height, window_flags)
@@ -23,6 +56,10 @@ class Window:
             sdl3.SDL_Quit()
             raise GraphicsException(f"Failed to create window: {sdl3.SDL_GetError().decode()}")
         self._window = window
+
+        num_keys = ctypes.c_int(0)
+        keystate = sdl3.SDL_GetKeyboardState(ctypes.byref(num_keys))
+        self._keyboard = ctypes.cast(keystate, ctypes.POINTER(ctypes.c_bool * 512)).contents
 
         renderer = sdl3.SDL_CreateRenderer(window, None)
         if not renderer:
@@ -60,6 +97,9 @@ class Window:
                 tick(self)
             self.update()
             time.sleep(self._tick)
+
+    def is_key_pressed(self, key):
+        return self._keyboard[_scancodes[key]]
 
     def close(self):
         self._is_open = False
