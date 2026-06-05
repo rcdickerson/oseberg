@@ -18,6 +18,9 @@ class Window:
         if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
             raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
 
+        if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
+            raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
+
         window_flags = sdl3.SDL_WINDOW_OPENGL
         window = sdl3.SDL_CreateWindow(title.encode('utf-8'), width, height, window_flags)
         if not window:
