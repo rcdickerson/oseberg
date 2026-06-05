@@ -7,8 +7,8 @@ import time
 if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
     raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
 
-sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_MULTISAMPLEBUFFERS, 1)
-sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_MULTISAMPLESAMPLES, 4)
+#sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_MULTISAMPLEBUFFERS, 1)
+#sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_MULTISAMPLESAMPLES, 4)
 
 class GraphicsException(Exception):
     pass
