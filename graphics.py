@@ -1,7 +1,6 @@
 import ctypes
 import math
 import sdl3
-import sys
 import time
 
 class GraphicsException(Exception):
@@ -55,8 +54,10 @@ class Window:
     def is_open(self):
         return self._is_open
 
-    def show(self):
+    def show(self, tick=None):
         while self.is_open():
+            if tick:
+                tick(self)
             self.update()
             time.sleep(self._tick)
 
@@ -78,6 +79,15 @@ class Color:
 
     def setr_draw_color(self, renderer):
         sdl3.SDL_SetRenderDrawColor(renderer, self._r, self._g, self._b, self._alpha)
+
+    def clone(self):
+        return Color(self._r, self._g, self._b, self._alpha)
+
+Color.WHITE = Color(255, 255, 255)
+Color.BLACK = Color(0, 0, 0)
+Color.RED = Color(255, 0, 0)
+Color.GREEN = Color(0, 255, 0)
+Color.BLUE = Color(0, 0, 255)
 
 
 class Point:
@@ -108,6 +118,9 @@ class Circle:
         else:
             self._render_pixels()
 
+    def translate(self, dx, dy):
+        self._center = Point(self._center._x + dx, self._center._y + dy)
+
     def _make_texture(self, renderer):
         texture = sdl3.SDL_CreateTexture(
             renderer,
@@ -117,6 +130,8 @@ class Circle:
             self._extended_diameter)
         sdl3.SDL_UpdateTexture(texture, None, self._pixels, self._extended_diameter * 4)
         sdl3.SDL_SetTextureBlendMode(texture, sdl3.SDL_BLENDMODE_BLEND)
+        if self._texture:
+            sdl3.SDL_DestroyTexture(self._texture)
         self._texture = texture
 
     def _render_pixels(self):
@@ -168,6 +183,43 @@ class Rectangle:
     def set_color(self, color):
         self._color = color
 
+    def center_at(self, cx, cy):
+        self._left_x = cx - self._width // 2
+        self._top_y = cy - self._height // 2
+        self._right_x = self._left_x + self._width
+        self._bottom_y = self._top_y + self._height
+
+    def translate(self, dx, dy):
+        current_center = self.center()
+        self.center_at(current_center._x + dx, current_center._y + dy)
+
+    def left_x(self):
+        return self._left_x
+
+    def top_y(self):
+        return self._top_y
+
+    def right_x(self):
+        return self._right_x
+
+    def bottom_y(self):
+        return self._bottom_y
+
+    def width(self):
+        return self._width
+
+    def height(self):
+        return self._height
+
+    def center(self):
+        return Point(self._left_x + self._width // 2,
+                     self._top_y + self._height // 2)
+
+    def clone(self):
+        copy = Rectangle(self._left_x, self._top_y, self._width, self._height)
+        copy.set_color(self._color.clone())
+        return copy
+
     def _render(self, renderer):
         color = self._color.as_fcolor()
         vertices = [
@@ -203,30 +255,3 @@ class Rectangle:
             len(vertices),
             idx_array,
             len(indices))
-
-
-def main():
-    window = Window('Test Window', 800, 600)
-    window.set_background_color(Color(30, 100, 200))
-
-    circle = Circle(Point(400, 300), 100)
-    circle.set_color(Color(0, 80, 0))
-    window.add(circle)
-
-    circle2 = Circle(Point(400, 300), 95)
-    circle2.set_color(Color(0, 200, 0))
-    window.add(circle2)
-
-    rectangle1 = Rectangle(190, 90, 320, 170)
-    rectangle1.set_color(Color(255, 255, 255))
-    window.add(rectangle1)
-
-    rectangle2 = Rectangle(200, 100, 300, 150)
-    rectangle2.set_color(Color(50, 50, 200))
-    window.add(rectangle2)
-
-    window.show()
-    return 0
-
-if __name__ == "__main__":
-    sys.exit(main())
