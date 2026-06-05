@@ -39,5 +39,6 @@ pip install PySDL3
 
 The following features aren't implemented yet, but are on the short term plan:
 
-+ Recognizing mouse clicks.
++ Support for a larger set of geometries (e.g., 2D lines, triangles)
++ Recognizing and responding to mouse clicks
 + Rendering images from files (gifs, pngs, etc.)
