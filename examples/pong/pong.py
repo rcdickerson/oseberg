@@ -14,6 +14,11 @@ NET_RECT_HEIGHT = 30
 NET_RECT_GAP = 15
 
 class Game:
+    """
+    The primary game object, responsible for rendering and
+    tracking game state.
+    """
+
     def __init__(self, window):
         self._window = window
 
@@ -116,6 +121,11 @@ class Game:
             self._left_score_label.set_text(str(self._left_score))
 
 class Ball:
+    """
+    Represents the ball being hit by the players.
+    It's Pong, so the "ball" is a square!
+    """
+
     WIDTH = 20
 
     def __init__(self):
@@ -161,7 +171,10 @@ class Ball:
     def draw(self, window):
         window.add(self._square)
 
+
 class Paddle:
+    """Rectangular paddle controlled by one of the players."""
+
     PADDLE_HEIGHT = 100
     PADDLE_WIDTH = 20
 
