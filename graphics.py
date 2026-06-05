@@ -4,12 +4,6 @@ import sdl3
 import sys
 import time
 
-if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
-    raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
-
-#sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_MULTISAMPLEBUFFERS, 1)
-#sdl3.SDL_GL_SetAttribute(sdl3.SDL_GL_MULTISAMPLESAMPLES, 4)
-
 class GraphicsException(Exception):
     pass
 
@@ -20,6 +14,9 @@ class Window:
         self._children = []
         self._tick = 1/60
         self._event = sdl3.SDL_Event()
+
+        if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
+            raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
 
         window_flags = sdl3.SDL_WINDOW_OPENGL
         window = sdl3.SDL_CreateWindow(title.encode('utf-8'), width, height, window_flags)
@@ -116,7 +113,7 @@ class Circle:
                 dist = math.sqrt(dx * dx + dy * dy)
 
                 if dist >= self._radius + 0.5:
-                    alpha = 0
+                    continue
                 elif dist <= self._radius - 0.5:
                     alpha = 255
                 else:
