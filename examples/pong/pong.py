@@ -17,7 +17,7 @@ class Game:
     def __init__(self, window):
         self._window = window
 
-        self._window.set_background_color(Color(0, 0, 0))
+        self._window.set_background_color(Color.BLACK)
 
         self._left_score = 0
         self._left_score_label = TextArea('0', WINDOW_WIDTH / 3, PADDLE_MARGIN)

@@ -3,7 +3,7 @@ import math
 import sdl3
 import time
 
-class GraphicsException(Exception):
+class GraphicsError(Exception):
     pass
 
 _scancodes = {
@@ -55,18 +55,18 @@ def _open_font(text_engine, font_name, font_size):
         if font:
             break
     if not font:
-        raise GraphicsException(f'Could not find a font path for: {font_id}')
+        raise GraphicsError(f'Could not find a font path for: {font_id}')
     return font
 
 class Window:
     def __init__(self, title='Window', width=800, height=600):
         if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
-            raise Exception(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
+            raise GraphicsError(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
 
         if not sdl3.TTF_Init():
             print(f"TTF Init Error: {sdl3.SDL_GetError().decode()}")
             sdl3.SDL_Quit()
-            raise Exception("TTF initialization failed")
+            raise GraphicsError("TTF initialization failed")
 
         self._background_color = Color(0, 0, 0)
         self._is_open = True
@@ -79,7 +79,7 @@ class Window:
         window = sdl3.SDL_CreateWindow(title.encode('utf-8'), width, height, window_flags)
         if not window:
             sdl3.SDL_Quit()
-            raise GraphicsException(f"Failed to create window: {sdl3.SDL_GetError().decode()}")
+            raise GraphicsError(f"Failed to create window: {sdl3.SDL_GetError().decode()}")
         self._window = window
 
         num_keys = ctypes.c_int(0)
@@ -90,7 +90,7 @@ class Window:
         if not renderer:
             sdl3.SDL_DestroyWindow(window)
             sdl3.SDL_Quit()
-            raise GraphicsException(f"Failed to create renderer: {sdl3.SDL_GetError().decode()}")
+            raise GraphicsError(f"Failed to create renderer: {sdl3.SDL_GetError().decode()}")
         sdl3.SDL_SetRenderDrawBlendMode(renderer, sdl3.SDL_BLENDMODE_BLEND)
         self._renderer = renderer
         self._text_engine = sdl3.TTF_CreateRendererTextEngine(self._renderer)
@@ -153,17 +153,26 @@ class Color:
     def clone(self):
         return Color(self._r, self._g, self._b, self._alpha)
 
-Color.WHITE = Color(255, 255, 255)
+
+# Some predefined colors.
 Color.BLACK = Color(0, 0, 0)
-Color.RED = Color(255, 0, 0)
-Color.GREEN = Color(0, 255, 0)
 Color.BLUE = Color(0, 0, 255)
+Color.CYAN = Color(0, 255, 255)
+Color.GREEN = Color(0, 255, 0)
+Color.RED = Color(255, 0, 0)
+Color.WHITE = Color(255, 255, 255)
 
 
 class Point:
     def __init__(self, x, y):
         self._x = x
         self._y = y
+
+    def get_x(self):
+        return self._x
+
+    def get_y(self):
+        return self._y
 
 
 class Circle:
