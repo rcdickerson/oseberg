@@ -1,8 +1,8 @@
 from graphics import *
-import time
-import random
 import math
+import random
 import sys
+import time
 
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
