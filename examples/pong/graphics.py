@@ -423,6 +423,7 @@ class TextArea:
         if self._sdl_text:
             sdl3.TTF_DestroyText(self._sdl_text)
 
+
 class Image:
     """Renders an image from file."""
 
