@@ -234,7 +234,6 @@ class Circle(TextureRender):
         self._center = Point(center_x, center_y)
         self._radius = radius
         self._color = Color(255, 255, 255)
-        self._texture = None
 
         # Expanded radius with an anti-aliasing border.
         self._extended_radius = self._radius + 1
