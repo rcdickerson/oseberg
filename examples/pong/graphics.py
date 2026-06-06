@@ -206,11 +206,23 @@ class Color:
 # Some predefined colors.
 Color.BLACK = Color(0, 0, 0)
 Color.BLUE = Color(0, 0, 255)
+Color.BROWN = Color(165, 42, 42)
 Color.CYAN = Color(0, 255, 255)
-Color.GREEN = Color(0, 255, 0)
+Color.GRAY = Color(128, 128, 128)
+Color.GREEN = Color(0, 128, 0)
+Color.LIME = Color(0, 255, 0)
+Color.MAGENTA = Color(255, 0, 255)
+Color.MAROON = Color(128, 0, 0)
+Color.NAVY = Color(0, 0, 128)
+Color.OLIVE = Color(128, 128, 0)
+Color.ORANGE = Color(255, 165, 0)
+Color.PINK = Color(255, 192, 203)
+Color.PURPLE = Color(128, 0, 128)
 Color.RED = Color(255, 0, 0)
+Color.SILVER = Color(192, 192, 192)
+Color.TEAL = Color(0, 128, 128)
 Color.WHITE = Color(255, 255, 255)
-
+Color.YELLOW = Color(255, 255, 0)
 
 class Point:
     """A single (x,y) point."""
