@@ -8,8 +8,8 @@ WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 PADDLE_MARGIN = 25
 PADDLE_SPEED = 10
-INITIAL_BALL_VELOCITY_X = 10
-NET_RECT_WIDTH = 16
+INITIAL_BALL_VELOCITY_X = 8
+NET_RECT_WIDTH = 10
 NET_RECT_HEIGHT = 30
 NET_RECT_GAP = 15
 
@@ -130,14 +130,14 @@ class Ball:
 
     def __init__(self):
         self._square = Rectangle(0, 0, Ball.WIDTH, Ball.WIDTH)
-        self._square.center_at(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
+        self._square.set_center(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)
         self._square.set_color(Color.WHITE)
 
         self._velx = 0
         self._vely = 0
 
     def place_at(self, x, y):
-        self._square.center_at(x, y)
+        self._square.set_center(x, y)
 
     def get_bounds(self):
         return self._square.clone()
@@ -180,7 +180,7 @@ class Paddle:
 
     def __init__(self, x_position):
         self._rect = Rectangle(0, 0, Paddle.PADDLE_WIDTH, Paddle.PADDLE_HEIGHT)
-        self._rect.center_at(x_position, WINDOW_HEIGHT // 2)
+        self._rect.set_center(x_position, WINDOW_HEIGHT // 2)
 
         self._rect.set_color(Color.WHITE)
         self._velocity = 0

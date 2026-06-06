@@ -103,6 +103,71 @@ class TextureRender:
         sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)
 
 
+class Positioned:
+    """Abstract class for objects which have an (x, y) position."""
+
+    def __init__(self, x=0, y=0):
+        self._x_position = x
+        self._y_position = y
+
+    def get_x(self):
+        return self._x_position
+
+    def get_y(self):
+        return self._y_position
+
+    def set_x(self, x):
+        self._x_position = x
+
+    def set_y(self, y):
+        self._y_position = y
+
+    def translate(self, dx, dy):
+        self._x_position += dx
+        self._y_position += dy
+
+
+class Bounded(Positioned):
+    """Abstract class for objects which have a width / height bound."""
+
+    def __init__(self, x, y, width, height):
+        Positioned.__init__(self, x, y)
+        self._width = width
+        self._height = height
+
+    def get_width(self):
+        return self._width
+
+    def get_height(self):
+        return self._height
+
+    def get_center(self):
+        center_x = (self.get_x() + self._width) / 2
+        center_y = (self.get_y() + self._height) / 2
+        return Point(center_x, center_y)
+
+    def set_center(self, center_x, center_y):
+        self.set_x(center_x - self.get_width() / 2)
+        self.set_y(center_y - self.get_height() / 2)
+
+    def _bounds_as_frect(self):
+        return sdl3.SDL_FRect(
+            self.get_x(),
+            self.get_y(),
+            self._width,
+            self._height)
+
+    def set_width(self, width):
+        self._width = width
+
+    def set_height(self, height):
+        self._height = height
+
+    def scale(self, scale):
+        self._width *= scale
+        self._height *= scale
+
+
 class Window:
     """A class representing an application window."""
 
@@ -224,26 +289,20 @@ Color.TEAL = Color(0, 128, 128)
 Color.WHITE = Color(255, 255, 255)
 Color.YELLOW = Color(255, 255, 0)
 
-class Point:
+
+class Point(Positioned):
     """A single (x,y) point."""
 
     def __init__(self, x, y):
-        self._x = x
-        self._y = y
-
-    def get_x(self):
-        return self._x
-
-    def get_y(self):
-        return self._y
+        Positioned.__init__(self)
 
 
-class Circle(TextureRender):
+class Circle(TextureRender, Positioned):
     """Renders a circle."""
 
     def __init__(self, center_x, center_y, radius):
+        Positioned.__init__(self, center_x, center_y)
         TextureRender.__init__(self)
-        self._center = Point(center_x, center_y)
         self._radius = radius
         self._color = Color(255, 255, 255)
 
@@ -260,10 +319,6 @@ class Circle(TextureRender):
             sdl3.SDL_SetTextureAlphaMod(self._texture, color._alpha)
         else:
             self._render_pixels()
-
-    def translate(self, dx, dy):
-        """Move the circle by dx in the x direction and dy in the y direction."""
-        self._center = Point(self._center._x + dx, self._center._y + dy)
 
     def _make_texture(self, renderer):
         """To avoid the per-frame cost of calculating circle
@@ -283,8 +338,8 @@ class Circle(TextureRender):
 
     def _get_bounds(self):
         return sdl3.SDL_FRect(
-            self._center._x - self._extended_radius,
-            self._center._y - self._extended_radius,
+            self.get_x() - self._extended_radius,
+            self.get_y() - self._extended_radius,
             float(self._extended_diameter),
             float(self._extended_diameter))
 
@@ -316,55 +371,31 @@ class Circle(TextureRender):
         self._pixels = bytes(pixels)
 
 
-class Rectangle:
+class Rectangle(Bounded):
     """Renders a rectangle."""
 
     def __init__(self, left_x, top_y, width, height):
-        self._left_x = left_x
-        self._top_y = top_y
-        self._right_x = left_x + width
-        self._bottom_y = top_y + height
-        self._width = width
-        self._height = height
+        Bounded.__init__(self, left_x, top_y, width, height)
         self._color = Color(255, 255, 255)
 
     def set_color(self, color):
         self._color = color
 
-    def center_at(self, cx, cy):
-        self._left_x = cx - self._width // 2
-        self._top_y = cy - self._height // 2
-        self._right_x = self._left_x + self._width
-        self._bottom_y = self._top_y + self._height
-
-    def translate(self, dx, dy):
-        current_center = self.center()
-        self.center_at(current_center._x + dx, current_center._y + dy)
-
     def left_x(self):
-        return self._left_x
+        return self.get_x()
 
     def top_y(self):
-        return self._top_y
+        return self.get_y()
 
     def right_x(self):
-        return self._right_x
+        return self.get_x() + self.get_width()
 
     def bottom_y(self):
-        return self._bottom_y
-
-    def width(self):
-        return self._width
-
-    def height(self):
-        return self._height
-
-    def center(self):
-        return Point(self._left_x + self._width // 2,
-                     self._top_y + self._height // 2)
+        return self.get_y() + self.get_height()
 
     def clone(self):
-        copy = Rectangle(self._left_x, self._top_y, self._width, self._height)
+        copy = Rectangle(self.left_x(), self.top_y(),
+                         self.get_width(), self.get_height())
         copy.set_color(self._color.clone())
         return copy
 
@@ -373,19 +404,19 @@ class Rectangle:
         color = self._color.as_fcolor()
         vertices = [
             sdl3.SDL_Vertex(
-                sdl3.SDL_FPoint(self._left_x, self._top_y),
+                sdl3.SDL_FPoint(self.left_x(), self.top_y()),
                 color,
                 sdl3.SDL_FPoint(0.0, 0.0)),
             sdl3.SDL_Vertex(
-                sdl3.SDL_FPoint(self._right_x, self._top_y),
+                sdl3.SDL_FPoint(self.right_x(), self.top_y()),
                 color,
                 sdl3.SDL_FPoint(0.0, 0.0)),
             sdl3.SDL_Vertex(
-                sdl3.SDL_FPoint(self._right_x, self._bottom_y),
+                sdl3.SDL_FPoint(self.right_x(), self.bottom_y()),
                 color,
                 sdl3.SDL_FPoint(0.0, 0.0)),
             sdl3.SDL_Vertex(
-                sdl3.SDL_FPoint(self._left_x, self._bottom_y),
+                sdl3.SDL_FPoint(self.left_x(), self.bottom_y()),
                 color,
                 sdl3.SDL_FPoint(0.0, 0.0))]
 
@@ -406,17 +437,17 @@ class Rectangle:
             len(indices))
 
 
-class TextArea:
+class TextArea(Positioned):
     """Renders text for display on a Window."""
 
     def __init__(self, text='', x=0, y=0, font='arial', font_size=24):
+        Positioned.__init__(self, x, y)
         self._text = text.encode('utf-8')
         self._sdl_text = None
         self._font = font
         self._font_size = font_size
         self._sdl_font = None
         self.set_color(Color(255, 255, 255))
-        self.set_location(x, y)
 
     def set_text(self, text):
         self._text = text
@@ -427,10 +458,6 @@ class TextArea:
         self._color = color
         if self._sdl_text:
             sdl3.TTF_SetTextColor(self._sdl_text, color._r, color._g, color._b, color._alpha)
-
-    def set_location(self, x, y):
-        self._location_x = x
-        self._location_y = y
 
     def set_font(self, font):
         self._font = font
@@ -446,37 +473,32 @@ class TextArea:
 
     def _render(self, renderer):
         if self._sdl_text:
-            sdl3.TTF_DrawRendererText(self._sdl_text, self._location_x, self._location_y)
+            sdl3.TTF_DrawRendererText(self._sdl_text, self.get_x(), self.get_y())
         else:
             self._color.setr_draw_color(renderer)
-            sdl3.SDL_RenderDebugText(renderer, self._location_x, self._location_y, self._text)
+            sdl3.SDL_RenderDebugText(renderer, self.get_x(), self.get_y(), self._text)
 
     def _destroy(self):
         if self._sdl_text:
             sdl3.TTF_DestroyText(self._sdl_text)
 
 
-class Image(TextureRender):
+class Image(Bounded, TextureRender):
     """Renders an image from file."""
 
     def __init__(self, image_path, x=0, y=0):
+        Bounded.__init__(self, x, y, 0, 0)
         TextureRender.__init__(self)
         self._image_path = image_path.encode('utf-8')
-        self._x = x
-        self._y = y
-
-    def translate(self, dx, dy):
-        self._x += dx
-        self._y += dy
 
     def _make_texture(self, renderer):
         texture = sdl3.SDL_image.IMG_LoadTexture(renderer, self._image_path)
         if not texture:
             raise GraphicsError(f"{sdl3.SDL_GetError().decode()}")
         props = sdl3.SDL_GetTextureProperties(texture)
-        self._width = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.width", 0)
-        self._height = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.height", 0)
+        self.set_width(sdl3.SDL_GetNumberProperty(props, b"SDL.texture.width", 0))
+        self.set_height(sdl3.SDL_GetNumberProperty(props, b"SDL.texture.height", 0))
         return texture
 
     def _get_bounds(self):
-        return sdl3.SDL_FRect(self._x, self._y, self._width, self._height)
+        return self._bounds_as_frect()
