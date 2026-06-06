@@ -422,3 +422,31 @@ class TextArea:
     def _destroy(self):
         if self._sdl_text:
             sdl3.TTF_DestroyText(self._sdl_text)
+
+class Image:
+    """Renders an image from file."""
+
+    def __init__(self, image_path, x=0, y=0):
+        self._image_path = image_path.encode('utf-8')
+
+        self._texture = None
+        self._x = x
+        self._y = y
+
+    def translate(self, dx, dy):
+        self._x += dx
+        self._y += dy
+
+    def _load_image(self, renderer):
+        self._texture = sdl3.SDL_image.IMG_LoadTexture(renderer, self._image_path)
+        if not self._texture:
+            raise GraphicsError(f"{sdl3.SDL_GetError().decode()}")
+        props = sdl3.SDL_GetTextureProperties(self._texture)
+        self._width = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.width", 0)
+        self._height = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.height", 0)
+
+    def _render(self, renderer):
+        if not self._texture:
+            self._load_image(renderer)
+        bounds = sdl3.SDL_FRect(self._x, self._y, self._width, self._height)
+        sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)

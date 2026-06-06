@@ -4,8 +4,12 @@ import sdl3
 import time
 
 class GraphicsError(Exception):
+    """An exception type for graphics errors."""
     pass
 
+# Map string key ids to SLD3 scancodes. We could do much of this by
+# computing the offsets from scancode A, although this would not be
+# robust to (unlikely) changes in the SDL3 scancode definitions.
 _scancodes = {
   'a': sdl3.SDL_SCANCODE_A,
   'b': sdl3.SDL_SCANCODE_B,
@@ -39,6 +43,10 @@ _scancodes = {
   'Right': sdl3.SDL_SCANCODE_RIGHT,
 }
 
+# Map from font IDs to possible system locations for the font's TTF
+# file. This could obviously fail depending on system, and for now the
+# most reliable way to get a font is to include the TTF file in the
+# project directory. (See also _open_font defined below.)
 _font_locations = {
   'arial': ['C:\\Windows\\Fonts\\arial.ttf',
             '/Library/Fonts/Arial.ttf',
@@ -46,6 +54,17 @@ _font_locations = {
 }
 
 def _open_font(text_engine, font_name, font_size):
+    """
+    Attempts to open a TTF font, returning and SDL font object for
+    that font at the given size. Searches for a TTF file in the following
+    order:
+
+      1. A file called 'font_name' in the current directory.
+      2. A file called 'font_name.ttf' in the current directory.
+      3. A system font file in the order specified by _font_locations.
+
+    If no suitable font file can be found, raises a GraphicsError.
+    """
     search_paths = [font_name, f'{font_name}.ttf']
     search_paths.extend(_font_locations[font_name])
 
@@ -59,6 +78,8 @@ def _open_font(text_engine, font_name, font_size):
     return font
 
 class Window:
+    """A class representing an application window."""
+
     def __init__(self, title='Window', width=800, height=600):
         if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO):
             raise GraphicsError(f"SDL Init Failed: {sdl3.SDL_GetError().decode()}")
@@ -96,6 +117,7 @@ class Window:
         self._text_engine = sdl3.TTF_CreateRendererTextEngine(self._renderer)
 
     def update(self):
+        """Renders a single frame to the window."""
         while sdl3.SDL_PollEvent(ctypes.byref(self._event)):
             if self._event.type == sdl3.SDL_EVENT_QUIT:
                 self.close()
@@ -138,6 +160,7 @@ class Window:
 
 
 class Color:
+    """Represents a UI element color."""
     def __init__(self, red, green, blue, alpha=255):
         self._r = red
         self._g = green
@@ -164,6 +187,8 @@ Color.WHITE = Color(255, 255, 255)
 
 
 class Point:
+    """A single (x,y) coordinate."""
+
     def __init__(self, x, y):
         self._x = x
         self._y = y
@@ -176,6 +201,8 @@ class Point:
 
 
 class Circle:
+    """A circle that may be drawn in a Window."""
+
     def __init__(self, center, radius):
         self._center = center
         self._radius = radius
@@ -198,9 +225,15 @@ class Circle:
             self._render_pixels()
 
     def translate(self, dx, dy):
+        """Move the circle by dx in the x direction and dy in the y direction."""
         self._center = Point(self._center._x + dx, self._center._y + dy)
 
     def _make_texture(self, renderer):
+        """To avoid the per-frame cost of calculating circle
+        rendering, including anti-aliasing, Circles are rendered to a
+        static texture that can be re-used on each frame. This method
+        creates (or re-creates) that texture.
+        """
         texture = sdl3.SDL_CreateTexture(
             renderer,
             sdl3.SDL_PIXELFORMAT_RGBA32,
@@ -214,6 +247,7 @@ class Circle:
         self._texture = texture
 
     def _render_pixels(self):
+        """Render the Circle to a byte array of pixel values."""
         pixels_size = (self._extended_diameter + 1) * (self._extended_diameter + 1) * 4
         pixels = bytearray(pixels_size)
         for y in range(self._extended_diameter + 1):
@@ -239,6 +273,7 @@ class Circle:
         self._pixels = bytes(pixels)
 
     def _render(self, renderer):
+        """Draw the circle using the given renderer."""
         if not self._texture:
             self._make_texture(renderer)
         bounds = sdl3.SDL_FRect(
@@ -250,6 +285,8 @@ class Circle:
 
 
 class Rectangle:
+    """A rectangle that may be drawn on a Window."""
+
     def __init__(self, left_x, top_y, width, height):
         self._left_x = left_x
         self._top_y = top_y
@@ -300,6 +337,7 @@ class Rectangle:
         return copy
 
     def _render(self, renderer):
+        """Draw the rectangle using the given renderer."""
         color = self._color.as_fcolor()
         vertices = [
             sdl3.SDL_Vertex(
@@ -326,7 +364,7 @@ class Rectangle:
         vert_array = (sdl3.SDL_Vertex * num_vertices)(*vertices)
         idx_array = (ctypes.c_int * len(indices))(*indices)
 
-        # Render.
+        # Render as a 2-triangle mesh.
         sdl3.SDL_RenderGeometry(
             renderer,
             None,
@@ -337,6 +375,8 @@ class Rectangle:
 
 
 class TextArea:
+    """Text for display on a Window."""
+
     def __init__(self, text='', x=0, y=0, font='arial', font_size=24):
         self._text = text.encode('utf-8')
         self._sdl_text = None
@@ -382,3 +422,31 @@ class TextArea:
     def _destroy(self):
         if self._sdl_text:
             sdl3.TTF_DestroyText(self._sdl_text)
+
+class Image:
+    """Renders an image from file."""
+
+    def __init__(self, image_path, x=0, y=0):
+        self._image_path = image_path.encode('utf-8')
+
+        self._texture = None
+        self._x = x
+        self._y = y
+
+    def translate(self, dx, dy):
+        self._x += dx
+        self._y += dy
+
+    def _load_image(self, renderer):
+        self._texture = sdl3.SDL_image.IMG_LoadTexture(renderer, self._image_path)
+        if not self._texture:
+            raise GraphicsError(f"{sdl3.SDL_GetError().decode()}")
+        props = sdl3.SDL_GetTextureProperties(self._texture)
+        self._width = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.width", 0)
+        self._height = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.height", 0)
+
+    def _render(self, renderer):
+        if not self._texture:
+            self._load_image(renderer)
+        bounds = sdl3.SDL_FRect(self._x, self._y, self._width, self._height)
+        sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)
