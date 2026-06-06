@@ -80,16 +80,19 @@ def _open_font(text_engine, font_name, font_size):
 
 
 class TextureRender:
+    """Abstract class for objects which render themselves using SDL
+    textures."""
+
     def __init__(self):
         self._texture = None
 
     @abstractmethod
     def _make_texture(self, renderer):
-        pass
+        """Create and return a texture object."""
 
     @abstractmethod
     def _get_bounds(self):
-        pass
+        """Return the current render boundary as an SDL FRect."""
 
     def _render(self, renderer):
         if not self._texture:
