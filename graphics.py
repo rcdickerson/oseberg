@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import ctypes
 import math
 import sdl3
@@ -76,6 +77,28 @@ def _open_font(text_engine, font_name, font_size):
     if not font:
         raise GraphicsError(f'Could not find a font path for: {font_id}')
     return font
+
+
+class TextureRender:
+    def __init__(self):
+        self._texture = None
+
+    @abstractmethod
+    def _make_texture(self, renderer):
+        pass
+
+    @abstractmethod
+    def _get_bounds(self):
+        pass
+
+    def _render(self, renderer):
+        if not self._texture:
+            self._texture = self._make_texture(renderer)
+            if not self._texture:
+                raise GraphicsError(f"{sdl3.SDL_GetError().decode()}")
+        bounds = self._get_bounds()
+        sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)
+
 
 class Window:
     """A class representing an application window."""
@@ -160,7 +183,7 @@ class Window:
 
 
 class Color:
-    """Represents a UI element color."""
+    """Represents an RGBA color."""
     def __init__(self, red, green, blue, alpha=255):
         self._r = red
         self._g = green
@@ -187,7 +210,7 @@ Color.WHITE = Color(255, 255, 255)
 
 
 class Point:
-    """A single (x,y) coordinate."""
+    """A single (x,y) point."""
 
     def __init__(self, x, y):
         self._x = x
@@ -200,11 +223,12 @@ class Point:
         return self._y
 
 
-class Circle:
-    """A circle that may be drawn in a Window."""
+class Circle(TextureRender):
+    """Renders a circle."""
 
-    def __init__(self, center, radius):
-        self._center = center
+    def __init__(self, center_x, center_y, radius):
+        TextureRender.__init__(self)
+        self._center = Point(center_x, center_y)
         self._radius = radius
         self._color = Color(255, 255, 255)
         self._texture = None
@@ -217,7 +241,6 @@ class Circle:
 
     def set_color(self, color):
         self._color = color
-
         if self._texture:
             sdl3.SDL_SetTextureColorMod(self._texture, color._r, color._g, color._b)
             sdl3.SDL_SetTextureAlphaMod(self._texture, color._alpha)
@@ -242,9 +265,15 @@ class Circle:
             self._extended_diameter)
         sdl3.SDL_UpdateTexture(texture, None, self._pixels, self._extended_diameter * 4)
         sdl3.SDL_SetTextureBlendMode(texture, sdl3.SDL_BLENDMODE_BLEND)
-        if self._texture:
-            sdl3.SDL_DestroyTexture(self._texture)
-        self._texture = texture
+        return texture
+
+    def _get_bounds(self):
+        return sdl3.SDL_FRect(
+            self._center._x - self._extended_radius,
+            self._center._y - self._extended_radius,
+            float(self._extended_diameter),
+            float(self._extended_diameter))
+
 
     def _render_pixels(self):
         """Render the Circle to a byte array of pixel values."""
@@ -272,20 +301,9 @@ class Circle:
                 pixels[offset + 3] = alpha
         self._pixels = bytes(pixels)
 
-    def _render(self, renderer):
-        """Draw the circle using the given renderer."""
-        if not self._texture:
-            self._make_texture(renderer)
-        bounds = sdl3.SDL_FRect(
-            self._center._x - self._extended_radius,
-            self._center._y - self._extended_radius,
-            float(self._extended_diameter),
-            float(self._extended_diameter))
-        sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)
-
 
 class Rectangle:
-    """A rectangle that may be drawn on a Window."""
+    """Renders a rectangle."""
 
     def __init__(self, left_x, top_y, width, height):
         self._left_x = left_x
@@ -375,7 +393,7 @@ class Rectangle:
 
 
 class TextArea:
-    """Text for display on a Window."""
+    """Renders text for display on a Window."""
 
     def __init__(self, text='', x=0, y=0, font='arial', font_size=24):
         self._text = text.encode('utf-8')
@@ -423,13 +441,13 @@ class TextArea:
         if self._sdl_text:
             sdl3.TTF_DestroyText(self._sdl_text)
 
-class Image:
+
+class Image(TextureRender):
     """Renders an image from file."""
 
     def __init__(self, image_path, x=0, y=0):
+        TextureRender.__init__(self)
         self._image_path = image_path.encode('utf-8')
-
-        self._texture = None
         self._x = x
         self._y = y
 
@@ -437,16 +455,14 @@ class Image:
         self._x += dx
         self._y += dy
 
-    def _load_image(self, renderer):
-        self._texture = sdl3.SDL_image.IMG_LoadTexture(renderer, self._image_path)
-        if not self._texture:
+    def _make_texture(self, renderer):
+        texture = sdl3.SDL_image.IMG_LoadTexture(renderer, self._image_path)
+        if not texture:
             raise GraphicsError(f"{sdl3.SDL_GetError().decode()}")
-        props = sdl3.SDL_GetTextureProperties(self._texture)
+        props = sdl3.SDL_GetTextureProperties(texture)
         self._width = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.width", 0)
         self._height = sdl3.SDL_GetNumberProperty(props, b"SDL.texture.height", 0)
+        return texture
 
-    def _render(self, renderer):
-        if not self._texture:
-            self._load_image(renderer)
-        bounds = sdl3.SDL_FRect(self._x, self._y, self._width, self._height)
-        sdl3.SDL_RenderTexture(renderer, self._texture, None, bounds)
+    def _get_bounds(self):
+        return sdl3.SDL_FRect(self._x, self._y, self._width, self._height)
