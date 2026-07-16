@@ -1,5 +1,6 @@
 # The Oseberg Graphics Library
-A basic Python graphics library backed by SDL3. Designed for introductory computer science use.
+A basic Python graphics library backed by SDL3. Designed for
+introductory computer science use.
 
 > [!WARNING]
 > This library is still in very early stages, use at your own risk!

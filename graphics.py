@@ -10,7 +10,8 @@ class GraphicsError(Exception):
 
 # Map string key ids to SLD3 scancodes. We could do much of this by
 # computing the offsets from scancode A, although this would not be
-# robust to (unlikely) changes in the SDL3 scancode definitions.
+# robust to (albiet unlikely) changes in the SDL3 scancode
+# definitions.
 _scancodes = {
   'a': sdl3.SDL_SCANCODE_A,
   'b': sdl3.SDL_SCANCODE_B,
@@ -304,13 +305,12 @@ class Circle(TextureRender, Positioned):
         Positioned.__init__(self, center_x, center_y)
         TextureRender.__init__(self)
         self._radius = radius
-        self._color = Color(255, 255, 255)
 
         # Expanded radius with an anti-aliasing border.
         self._extended_radius = self._radius + 1
         self._extended_diameter = 2 * self._extended_radius
 
-        self._render_pixels()
+        self.set_color(Color.WHITE)
 
     def set_color(self, color):
         self._color = color
@@ -371,12 +371,66 @@ class Circle(TextureRender, Positioned):
         self._pixels = bytes(pixels)
 
 
+class Triangle(Bounded):
+    """Renders a triangle."""
+
+    def __init__(self, x1, y1, x2, y2, x3, y3):
+        left = min(x1, x2, x3)
+        top = min(y1, y2, y3)
+        width = max(x1, x2, x3) - left
+        height = max(y1, y2, y3) - top
+        Bounded.__init__(self, left, top, width, height)
+        self._x1 = x1
+        self._y1 = y1
+        self._x2 = x2
+        self._y2 = y2
+        self._x3 = x3
+        self._y3 = y3
+        self.set_color(Color.WHITE)
+
+    def set_color(self, color):
+        self._color = color
+
+    def _render(self, renderer):
+        color = self._color.as_fcolor()
+
+        vertices = [
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._x1, self._y1),
+                color,
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._x2, self._y2),
+                color,
+                sdl3.SDL_FPoint(0.0, 0.0)),
+            sdl3.SDL_Vertex(
+                sdl3.SDL_FPoint(self._x3, self._y3),
+                color,
+                sdl3.SDL_FPoint(0.0, 0.0))]
+
+        indices = [0, 1, 2]
+
+        # Covert to C arrays.
+        num_vertices = len(vertices)
+        vert_array = (sdl3.SDL_Vertex * num_vertices)(*vertices)
+        idx_array = (ctypes.c_int * len(indices))(*indices)
+
+        # Render as a mesh.
+        sdl3.SDL_RenderGeometry(
+            renderer,
+            None,
+            vert_array,
+            len(vertices),
+            idx_array,
+            len(indices))
+
+
 class Rectangle(Bounded):
     """Renders a rectangle."""
 
     def __init__(self, left_x, top_y, width, height):
         Bounded.__init__(self, left_x, top_y, width, height)
-        self._color = Color(255, 255, 255)
+        self._color = Color.WHITE
 
     def set_color(self, color):
         self._color = color
@@ -447,7 +501,7 @@ class TextArea(Positioned):
         self._font = font
         self._font_size = font_size
         self._sdl_font = None
-        self.set_color(Color(255, 255, 255))
+        self.set_color(Color.WHITE)
 
     def set_text(self, text):
         self._text = text
