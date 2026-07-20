@@ -21,7 +21,6 @@ class Game:
 
     def __init__(self, window):
         self._window = window
-
         self._window.set_background_color(Color.BLACK)
 
         self._left_score = 0
@@ -58,7 +57,6 @@ class Game:
             y += NET_RECT_HEIGHT + NET_RECT_GAP
 
     def handle_input(self):
-        pass
         if self._window.is_key_pressed('q'):
              sys.exit(0)
 

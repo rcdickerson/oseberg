@@ -40,5 +40,5 @@ pip install PySDL3
 
 The following features aren't implemented yet, but are on the short term plan:
 
-+ Support for a larger set of geometries (e.g., 2D lines, triangles)
++ Support for a larger set of geometries (e.g., 2D lines)
 + Recognizing and responding to mouse clicks
